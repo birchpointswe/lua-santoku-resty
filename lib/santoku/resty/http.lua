@@ -1,6 +1,7 @@
 local http = require("resty.http")
 local err = require("santoku.error")
 
+-- TODO: accept and serialize params as argument
 local function request (opts)
   -- TODO: cache?
   http = http.new()
