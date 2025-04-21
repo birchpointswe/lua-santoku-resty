@@ -1,6 +1,7 @@
 local http = require("resty.http")
 local err = require("santoku.error")
 
+
 local function request (opts)
 
   http = http.new()
