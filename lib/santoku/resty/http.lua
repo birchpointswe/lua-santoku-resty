@@ -5,6 +5,9 @@ local err = require("santoku.error")
 local function request (opts)
   -- TODO: cache?
   http = http.new()
+  if opts.configure then
+    opts.configure(http)
+  end
   local res, e = http:request_uri(opts.url, {
     method = opts.method,
     body = opts.body,
