@@ -13,17 +13,25 @@ return {
       ssl_verify = opts.ssl_verify
     })
     if not res then
-      return done(false, { status = 0, headers = {}, body = e })
+      return done(false, {
+        status = 0,
+        headers = {},
+        ok = false,
+        body = function (cb) return cb(false, e) end
+      })
     end
     local headers = {}
     if res.headers then
       for k, v in pairs(res.headers) do headers[str.lower(k)] = v end
     end
+    local body = res.body
     return done(res.status >= 200 and res.status < 300, {
       status = res.status,
       headers = headers,
-      body = res.body,
-      ok = res.status >= 200 and res.status < 300
+      ok = res.status >= 200 and res.status < 300,
+      body = function (cb)
+        return cb(true, body)
+      end
     })
   end,
   sleep = function (ms, fn)
