@@ -18,7 +18,7 @@ end
 M.verify = function (auth, get_jwk, get_time, claim_spec)
   auth = auth and str.from_base64(auth)
   auth = auth and jwt:load_jwt(auth)
-  local kid = tbl.get(auth, "header", "kid")
+  local kid = tbl.get(auth, {"header", "kid"})
   if not kid then
     return false, "No kid"
   end
