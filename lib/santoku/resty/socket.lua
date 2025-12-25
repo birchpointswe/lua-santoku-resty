@@ -3,39 +3,39 @@ local str = require("santoku.string")
 local ngx = ngx
 
 return {
-  fetch = function (url, opts, done)
+  fetch = function (url, opts)
     opts = opts or {}
     local httpc = http.new()
-    local res, e = httpc:request_uri(url, {
+    local res, err = httpc:request_uri(url, {
       method = opts.method or "GET",
       body = opts.body,
       headers = opts.headers,
       ssl_verify = opts.ssl_verify
     })
     if not res then
-      return done(false, {
+      return false, {
         status = 0,
         headers = {},
         ok = false,
-        body = function (cb) return cb(false, e) end
-      })
+        error = err,
+        body = function () return nil end
+      }
     end
     local headers = {}
     if res.headers then
       for k, v in pairs(res.headers) do headers[str.lower(k)] = v end
     end
     local body = res.body
-    return done(res.status >= 200 and res.status < 300, {
+    return res.status >= 200 and res.status < 300, {
       status = res.status,
       headers = headers,
       ok = res.status >= 200 and res.status < 300,
-      body = function (cb)
-        return cb(true, body)
+      body = function ()
+        return body
       end
-    })
+    }
   end,
-  sleep = function (ms, fn)
+  sleep = function (ms)
     ngx.sleep(ms / 1000)
-    return fn()
   end
 }
