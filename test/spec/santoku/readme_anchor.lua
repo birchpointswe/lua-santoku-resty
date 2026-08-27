@@ -1,56 +1,3 @@
-<p align="center">
-  <img src="https://santoku.dev/logo-santoku-resty.png" height="64" alt="santoku-resty">
-</p>
-
-# santoku-resty
-
-OpenResty glue for the santoku ecosystem: thin wrappers over the upstream `lua-resty-*`
-rocks (HTTP client, JWT verification, WebSocket client and server) that add santoku error
-handling and a much smaller surface.
-
-## Install
-
-```sh
-luarocks install santoku-resty
-```
-
-## Example
-
-```lua
-local socket = require("santoku.resty.socket")
-
-local ok, resp = socket.fetch("https://example.com/", { method = "GET" })
-
-if ok then
-  print(resp.status, resp.body())
-end
-```
-
-Header keys are normalized to lowercase, a non-2xx status comes back as `ok = false`
-rather than an error, and `socket.request` returns a handle you can cancel before or
-during the call.
-
-## Documentation
-
-Runnable examples and the full API: [santoku.dev](https://santoku.dev/#santoku-resty).
-
-For agents and LLM tooling: [llms.txt](https://santoku.dev/llms.txt) for the index,
-[llms-full.txt](https://santoku.dev/llms-full.txt) for every documented example.
-
-## Tests
-
-Most of this code only runs inside an nginx worker, so the suite covers the parts that
-work against a stubbed transport: [`test/spec/santoku`](test/spec/santoku). The wrappers
-are deliberately short; for everything else read the source under
-[`lib/santoku/resty`](lib/santoku/resty).
-
-## License
-
-MIT, see [LICENSE](LICENSE).
-
-## More examples
-
-```lua
 local test = require("santoku.test")
 
 local err = require("santoku.error")
@@ -113,4 +60,3 @@ test("a request can be canceled before it is issued", function ()
   assert(eq(true, resp.canceled))
   assert(eq(0, served.calls))
 end)
-```
