@@ -8,28 +8,6 @@ OpenResty glue for the santoku ecosystem: thin wrappers over the upstream `lua-r
 rocks (HTTP client, JWT verification, WebSocket client and server) that add santoku error
 handling and a much smaller surface.
 
-## Install
-
-```sh
-luarocks install santoku-resty
-```
-
-## Example
-
-```lua
-local socket = require("santoku.resty.socket")
-
-local ok, resp = socket.fetch("https://example.com/", { method = "GET" })
-
-if ok then
-  print(resp.status, resp.body())
-end
-```
-
-Header keys are normalized to lowercase, a non-2xx status comes back as `ok = false`
-rather than an error, and `socket.request` returns a handle you can cancel before or
-during the call.
-
 ## Documentation
 
 Runnable examples and the full API: [santoku.dev](https://santoku.dev/#santoku-resty).
@@ -37,80 +15,7 @@ Runnable examples and the full API: [santoku.dev](https://santoku.dev/#santoku-r
 For agents and LLM tooling: [llms.txt](https://santoku.dev/llms.txt) for the index,
 [llms-full.txt](https://santoku.dev/llms-full.txt) for every documented example.
 
-## Tests
-
-Most of this code only runs inside an nginx worker, so the suite covers the parts that
-work against a stubbed transport: [`test/spec/santoku`](test/spec/santoku). The wrappers
-are deliberately short; for everything else read the source under
-[`lib/santoku/resty`](lib/santoku/resty).
-
 ## License
 
 MIT, see [LICENSE](LICENSE).
 
-## More examples
-
-```lua
-local test = require("santoku.test")
-
-local err = require("santoku.error")
-local assert = err.assert
-
-local validate = require("santoku.validate")
-local eq = validate.isequal
-
-local served = {}
-
-package.loaded["resty.http"] = {
-  new = function ()
-    return {
-      close = function () end,
-      request_uri = function (_, url, opts)
-        served.calls = served.calls + 1
-        served.url, served.method = url, opts.method
-        return { status = served.status, headers = served.headers, body = served.body }
-      end
-    }
-  end
-}
-
-package.loaded["santoku.resty.socket"] = nil
-local socket = require("santoku.resty.socket")
-
-local function serving (status, body, headers)
-  served.calls, served.status = 0, status
-  served.body, served.headers = body or "", headers or {}
-end
-
-test("fetch a url and read the response", function ()
-  serving(200, "pong")
-  local ok, resp = socket.fetch("http://example.com/ping")
-  assert(eq(true, ok))
-  assert(eq(200, resp.status))
-  assert(eq("pong", resp.body()))
-  assert(eq("GET", served.method))
-end)
-
-test("a non-2xx status comes back as not ok, not as an error", function ()
-  serving(404, "nope")
-  local ok, resp = socket.fetch("http://example.com/missing")
-  assert(eq(false, ok))
-  assert(eq(404, resp.status))
-end)
-
-test("response header keys are lowercased", function ()
-  serving(200, "", { ["Content-Type"] = "text/plain" })
-  local _, resp = socket.fetch("http://example.com/")
-  assert(eq("text/plain", resp.headers["content-type"]))
-end)
-
-test("a request can be canceled before it is issued", function ()
-  serving(200, "")
-  local req = socket.request("http://example.com/job")
-  req.cancel()
-  local ok, resp = req.await()
-  assert(eq(false, ok))
-  assert(eq(true, resp.canceled))
-  assert(eq(0, served.calls))
-end)
-```
